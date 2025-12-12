@@ -1,0 +1,50 @@
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "${LOG_MAX_SIZE:-10m}"
+    max-file: "${LOG_MAX_FILE:-3}"
+    compress: "${LOG_COMPRESS:-true}"
+services:
+  vscgallery-tun:
+    container_name: vscgallery-tun
+    image: ferronserver/ferron:2
+    restart: unless-stopped
+    logging: *default-logging
+    configs:
+      - source: vscgallery-tun-reverse
+        target: /etc/ferron.kdl
+      - source: vscgallery-tun-tls
+        target: /etc/ferron.d/tls/cert.kdl
+    environment:
+      VIRTUAL_PORT: ${VIRTUAL_PORT:-443}
+      VIRTUAL_HOST: ${VIRTUAL_HOST}
+      VIRTUAL_PROTO: ${VIRTUAL_PROTO:-https}
+      LETSENCRYPT_HOST: ${LETSENCRYPT_HOST}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+    volumes:
+      - step-ca-certs:/certs
+    networks:
+      - step-ca-network
+configs:
+  vscgallery-tun-reverse:
+    content: |-
+      * {
+          include "/etc/ferron.d/**/*.kdl"
+          location "/extensions" {
+              proxy "https://main.vscode-cdn.net"
+          }
+          location "/" {
+              proxy "https://marketplace.visualstudio.com"
+          }
+      }
+  vscgallery-tun-tls:
+    content: |
+      * {
+          tls "/certs/${VIRTUAL_HOST}.crt" "/certs/${VIRTUAL_HOST}.key"
+      }
+volumes:
+  step-ca-certs:
+    external: true
+networks:
+  step-ca-network:
+    external: true

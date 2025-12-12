@@ -1,0 +1,4 @@
+services:
+  vscgallery-tun:
+    ports:
+      - "80:80"

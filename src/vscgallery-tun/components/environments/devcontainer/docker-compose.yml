@@ -1,0 +1,8 @@
+services:
+  vscgallery-tun:
+    networks:
+      - vscgallery-tun-workspace-network
+
+networks:
+  vscgallery-tun-workspace-network:
+    external: true
